@@ -15,4 +15,9 @@ IF (LSTK_USE_VTK)
    LesionSegmentation.cxx
    itkLesionSegmentationCommandLineProgressReporter.cxx )
   TARGET_LINK_LIBRARIES( LesionSegmentation ${ITK_VTK_LSTK_LIBRARIES} )
+ 
+  ADD_EXECUTABLE( LesionSegmentationNIST
+   LesionSegmentationNIST.cxx
+   itkLesionSegmentationCommandLineProgressReporter.cxx )
+  TARGET_LINK_LIBRARIES( LesionSegmentationNIST ${ITK_VTK_LSTK_LIBRARIES} )
 ENDIF (LSTK_USE_VTK)
