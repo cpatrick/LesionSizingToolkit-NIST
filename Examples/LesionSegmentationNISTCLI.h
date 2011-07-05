@@ -6,7 +6,9 @@
 #include "vtkSmartPointer.h"
 #include "itkFixedArray.h"
 #include "itkLandmarkSpatialObject.h"
-#include <fstream> 
+#include <fstream>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 class LesionSegmentationNISTCLI : public MetaCommand
 {
@@ -33,9 +35,9 @@ public:
     this->AddArgument("Sigma", false,
       "Manually specify sigma. This is an array with 3 values in physical units. This defaults to the maximum spacing in the dataset, if unspecified",
       MetaCommand::LIST);
-    this->AddArgument("Seeds", true,
-      "Manually specify seeds. At least one must be specified",
-      MetaCommand::LIST);
+    this->AddArgument("SeedFile", true,
+                      "File with a list of seeds. At least one must be "
+                      "specified.");
     this->AddArgument("MaximumRadius", false, "Maximum radius of the lesion in mm. This can be used as alternate way of specifying the bounds. You specify a seed and a value of say 20mm, if you know the lesion is smaller than 20mm..", MetaCommand::FLOAT, "30");
     
     
@@ -84,19 +86,28 @@ public:
 
   PointListType GetSeeds()
     {
-    std::list< std::string > seedsString = this->GetValueAsList("Seeds");
-    std::list< std::string >::const_iterator fit = seedsString.begin();
-    const int nb_of_markers = seedsString.size() / 3;
-    PointListType seeds(nb_of_markers);
-    for (unsigned int i = 0; i < nb_of_markers; i++)
+    typedef std::vector<std::vector<double> >  TempStorageType;
+    TempStorageType tempPoints;
+    std::vector<double> tempPoint;
+    std::string seedFileName = this->GetValueAsString("SeedFile");
+    std::ifstream inFile(seedFileName.c_str());
+    std::string line;
+    while( std::getline( inFile, line ) )
       {
-      const double sx = (double)atof((*fit).c_str());
-      ++fit;
-      const double sy = (double)atof((*fit).c_str());
-      ++fit;
-      const double sz = (double)atof((*fit).c_str());
-      ++fit;
-      seeds[i].SetPosition(sx,sy,sz);
+      std::vector<std::string> strs;
+      boost::split(strs, line, boost::is_any_of(","));
+      tempPoint = std::vector<double>();
+      for( unsigned int i = 0; i < strs.size(); ++i )
+        {
+        tempPoint.push_back(boost::lexical_cast<double>(strs[i]));
+        }
+      tempPoints.push_back(tempPoint);
+      }
+    PointListType seeds(tempPoints.size());
+    for( unsigned int i = 0; i < tempPoints.size(); ++i )
+      {
+      seeds[i].SetPosition( tempPoints[i][0], tempPoints[i][1],
+                            tempPoints[i][2] );
       }
     return seeds;
     }

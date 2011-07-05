@@ -339,8 +339,17 @@ int main( int argc, char * argv[] )
 
 
   // Compute the ROI region
+  double* roi;
+  try
+    {
+    roi = args.GetROI();
+    }
+  catch( boost::bad_lexical_cast& e )
+    {
+    std::cerr << "Error in seed file." << std::endl;
+    return EXIT_FAILURE;
+    }
 
-  double *roi = args.GetROI();
   InputImageType::PointType origin = image->GetOrigin();
   InputImageType::SpacingType spacing = image->GetSpacing();
   InputImageType::RegionType region = image->GetLargestPossibleRegion();
@@ -348,7 +357,7 @@ int main( int argc, char * argv[] )
   // convert bounds into region indices
   InputImageType::PointType p1, p2;
   InputImageType::IndexType pi1, pi2;
-  for (int i = 0; i < ImageDimension; i++)
+  for (unsigned int i = 0; i < ImageDimension; i++)
     {
     p1[i] = roi[2*i];
     p2[i] = roi[2*i+1];
@@ -358,7 +367,7 @@ int main( int argc, char * argv[] )
   image->TransformPhysicalPointToIndex(p2, pi2);
 
   InputImageType::SizeType roiSize;
-  for (int i = 0; i < ImageDimension; i++)
+  for (unsigned int i = 0; i < ImageDimension; i++)
     {
     roiSize[i] = pi2[i] - pi1[i];
     }
@@ -414,7 +423,17 @@ int main( int argc, char * argv[] )
   std::cout << "\n Running the segmentation filter." << std::endl;
   SegmentationFilterType::Pointer seg = SegmentationFilterType::New();
   seg->SetInput(image);
-  seg->SetSeeds(args.GetSeeds());
+
+  try
+    {
+    seg->SetSeeds(args.GetSeeds());
+    }
+  catch( boost::bad_lexical_cast& e )
+    {
+    std::cerr << "Error in seed file." << std::endl;
+    return EXIT_FAILURE;
+    }
+
   seg->SetRegionOfInterest(roiRegion);
   seg->AddObserver( itk::ProgressEvent(), progressCommand );
   if (args.GetOptionWasSet("Sigma"))
