@@ -11,8 +11,16 @@ IF (LSTK_USE_VTK)
    ${ITK-LesionSizingToolkit_LIBRARIES}
    vtkRendering vtkIO vtkWidgets vtkHybrid )
 
+  find_package( boost REQUIRED )
+  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+
  ADD_EXECUTABLE( LesionSegmentation
    LesionSegmentation.cxx
    itkLesionSegmentationCommandLineProgressReporter.cxx )
   TARGET_LINK_LIBRARIES( LesionSegmentation ${ITK_VTK_LSTK_LIBRARIES} )
+ 
+  ADD_EXECUTABLE( LesionSegmentationNIST
+   LesionSegmentationNIST.cxx
+   itkLesionSegmentationCommandLineProgressReporter.cxx )
+  TARGET_LINK_LIBRARIES( LesionSegmentationNIST ${ITK_VTK_LSTK_LIBRARIES} )
 ENDIF (LSTK_USE_VTK)
