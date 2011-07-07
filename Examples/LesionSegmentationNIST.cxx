@@ -8,6 +8,8 @@
 #include "itkLesionSegmentationCommandLineProgressReporter.h"
 #include "itkEventObject.h"
 #include "itkImageToVTKImageFilter.h"
+#include "itkImageToAIMXMLFilter.h"
+
 #include "vtkMassProperties.h"
 #include "vtkImageData.h"
 #include "vtkMarchingCubes.h"
@@ -305,10 +307,11 @@ int main( int argc, char * argv[] )
 {
   LesionSegmentationNISTCLI args( argc, argv );
 
-  typedef itk::ImageFileReader< InputImageType > InputReaderType;
-  typedef itk::ImageFileWriter< RealImageType > OutputWriterType;
+  typedef itk::ImageFileReader< InputImageType >    InputReaderType;
+  typedef itk::ImageFileWriter< RealImageType >     OutputWriterType;
+  typedef itk::ImageToAIMXMLFilter< RealImageType > AIMFilterType;
   typedef itk::LesionSegmentationImageFilter8<
-          InputImageType, RealImageType > SegmentationFilterType;
+          InputImageType, RealImageType >           SegmentationFilterType;
 
 
   // Read the volume
@@ -455,6 +458,18 @@ int main( int argc, char * argv[] )
     writer->SetInput(seg->GetOutput());
     writer->Update();
     }
+
+  if (!args.GetValueAsString("OutputAIM").empty())
+    {
+    std::cout << "Writing the output segmented level set in AIM XML format. "
+              << args.GetValueAsString("OutputAIM") << ". "
+              << "The segmentation is an isosurface of this image at a "
+              << "value of -0.5." << std::endl;
+    AIMFilterType::Pointer aimFilter = AIMFilterType::New();
+    aimFilter->Update();
+    std::cout << aimFilter->GetOutput() << std::endl;
+    }
+
 
   // Compute volume
 
