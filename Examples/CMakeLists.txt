@@ -8,6 +8,7 @@ IF (LSTK_USE_VTK)
   INCLUDE(${VTK_USE_FILE})
 
   SET(ITK_VTK_LSTK_LIBRARIES
+   ${ITK-LesionSizingToolkit-Test_LIBRARIES}
    ${ITK-LesionSizingToolkit_LIBRARIES}
    vtkRendering vtkIO vtkWidgets vtkHybrid )
 
