@@ -17,6 +17,8 @@
 #ifndef _itkImageToAIMXMLFilter_txx
 #define _itkImageToAIMXMLFilter_txx
 
+#include "itkNumericTraits.h"
+
 #include "itkImageToAIMXMLFilter.h"
 
 namespace itk
@@ -38,7 +40,8 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
      m_StudyInstanceUID(""),
      m_SeriesInstanceUID(""),
      m_SOPClassUIDs(),
-     m_SOPInstanceUIDs()
+     m_SOPInstanceUIDs(),
+     m_Contours()
 {
 }
 
@@ -88,6 +91,36 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
 {
   m_SOPInstanceUIDs = uids;
 }
+template <class TInputImage, class TReferenceImage>
+void 
+ImageToAIMXMLFilter<TInputImage,TReferenceImage>
+::AddContourToVector( typename ContourFilterType::VertexListConstPointer verts,
+                      unsigned int sliceNum,
+                      ContourPointVectorType& vect,
+                      ReferenceIndexValueType& index ) const
+{
+  typename ReferenceImageType::IndexType referenceIndex;
+  for( unsigned int vertexNum = 0; vertexNum < verts->Size(); ++vertexNum )
+    {
+    std::cout << "Vertex: " << vertexNum << std::endl;
+    typename ContourFilterType::VertexType vertex;
+    typename InputImageType::IndexType inputIndex;
+    typename InputImageType::PointType point;
+    vertex = verts->ElementAt(vertexNum);
+    inputIndex[0] = vertex[0];
+    inputIndex[1] = vertex[1];
+    inputIndex[2] = sliceNum;
+    m_InputImage->TransformIndexToPhysicalPoint( inputIndex, point );
+    m_ReferenceImage->TransformPhysicalPointToIndex( point, referenceIndex);
+    for( unsigned int i = 0; i < 3; ++i )
+      {
+      std::cout << referenceIndex[i] << " ";
+      }
+    std::cout << std::endl;
+    vect.push_back(referenceIndex);
+    }
+  index = referenceIndex[2];
+}
 
 /**
  * Delegate the Update to the importer
@@ -107,23 +140,36 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
   desiredSize[2] = 0;
   m_InputImage->Print( std::cout );
   std::cout << "**iterate" << std::endl;
-  for( int i = inputIndex[2]; i < inputSize[2]; ++i )
+  for( unsigned int sliceNum = inputIndex[2]; 
+       sliceNum < inputSize[2]; 
+       ++sliceNum )
     {
+    std::cout << "Iteration: " << sliceNum << std::endl;
     typename InputImageType::RegionType desiredRegion;
     typename InputImageType::IndexType desiredIndex = inputIndex;
-    inputIndex[2] = i;
+    typename ContourFilterType::Pointer contourer = ContourFilterType::New();
+    inputIndex[2] = sliceNum;
     desiredRegion.SetSize(  desiredSize  );
     desiredRegion.SetIndex( desiredIndex );
     extractor->SetExtractionRegion( desiredRegion );
     extractor->SetDirectionCollapseToIdentity();
-    typename ThresholdFilterType::Pointer thresholder = ThresholdFilterType::New();
-    thresholder->SetInput(extractor->GetOutput());
-    thresholder->SetLowerThreshold(-0.5);
-    thresholder->SetUpperThreshold(-0.5);
-    thresholder->SetInsideValue(255);
-    thresholder->SetOutsideValue(0);
-    thresholder->Update();
-    std::cout << i << std::endl;
+    contourer->SetInput(extractor->GetOutput());
+    contourer->SetContourValue(-0.5);
+    contourer->Update();
+    for( unsigned int contourNum = 0;
+         contourNum < contourer->GetNumberOfOutputs();
+         ++contourNum )
+      {
+      std::cout << "Contour: " << contourNum << std::endl;
+      typename ContourFilterType::VertexListConstPointer verts;
+      verts = contourer->GetOutput(contourNum)->GetVertexList();
+      ContourPointVectorType contourVector;
+      IndexValueType referenceSlice;
+      this->AddContourToVector( verts, sliceNum, contourVector, referenceSlice );
+      typename ContourContainerType::value_type pairForInsertion(referenceSlice,
+                                                                 contourVector);
+      m_Contours.insert(pairForInsertion);
+      }
     }
   
   m_Output = "<test></test>";
