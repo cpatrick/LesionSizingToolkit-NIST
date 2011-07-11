@@ -9,6 +9,7 @@
 #include "itkEventObject.h"
 #include "itkImageToVTKImageFilter.h"
 #include "itkImageToAIMXMLFilter.h"
+#include "itkMetaImageIOFactory.h"
 
 #include "gdcmUIDGenerator.h"
 
@@ -560,6 +561,7 @@ int main( int argc, char * argv[] )
       << args.GetValueAsString("OutputImage") <<
       ". The segmentation is an isosurface of this image at a value of -0.5"
       << std::endl;
+    itk::ObjectFactoryBase::RegisterFactory( itk::MetaImageIOFactory::New() );
     OutputWriterType::Pointer writer = OutputWriterType::New();
     writer->SetFileName(args.GetValueAsString("OutputImage"));
     writer->SetInput(seg->GetOutput());
