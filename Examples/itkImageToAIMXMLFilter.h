@@ -19,7 +19,10 @@
 
 #include "itkProcessObject.h"
 #include "itkExtractImageFilter.h"
-#include "itkBinaryThresholdImageFilter.h"
+#include "itkContourExtractor2DImageFilter.h"
+
+#include <map>
+#include <vector>
 
 namespace itk
 {
@@ -60,8 +63,12 @@ public:
   typedef typename ReferenceImageType::ConstPointer            ReferenceImagePointer;
   typedef std::vector<std::string>                             UIDContainerType;
   typedef itk::ExtractImageFilter<InputImageType, SliceType>   ExtractFilterType;
-  typedef itk::BinaryThresholdImageFilter<SliceType, ThresholdedSliceType>
-                                                               ThresholdFilterType;
+  typedef itk::ContourExtractor2DImageFilter<SliceType>        ContourFilterType;
+  typedef std::vector<typename ReferenceImageType::IndexType>  ContourPointVectorType;
+  typedef typename ReferenceImageType::IndexType::IndexValueType
+                                                               ReferenceIndexValueType;
+  typedef std::multimap<ReferenceIndexValueType,ContourPointVectorType>
+                                                               ContourContainerType;
 
   /** Set the input in the form of an itk::Image */
   void SetInput( const InputImageType * );
@@ -88,6 +95,13 @@ protected:
   ImageToAIMXMLFilter(); 
   virtual ~ImageToAIMXMLFilter(); 
 
+  /// Helper function for turning the vertex list into a contour to be inserted in
+  /// the multimap m_Contours for extraction and output later
+  void AddContourToVector( typename ContourFilterType::VertexListConstPointer verts,
+                           unsigned int sliceNum,
+                           ContourPointVectorType& vect,
+                           ReferenceIndexValueType& index ) const;
+
 private:
   ImageToAIMXMLFilter(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
@@ -103,6 +117,7 @@ private:
   std::string           m_SeriesInstanceUID;
   UIDContainerType      m_SOPClassUIDs;
   UIDContainerType      m_SOPInstanceUIDs;
+  ContourContainerType  m_Contours;
 
 };
 
