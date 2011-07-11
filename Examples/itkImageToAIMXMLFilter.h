@@ -18,8 +18,8 @@
 #define __itkImageToAIMXMLFilter_h
 
 #include "itkProcessObject.h"
-#include "vtkImageImport.h"
-#include "vtkImageData.h"
+#include "itkExtractImageFilter.h"
+#include "itkBinaryThresholdImageFilter.h"
 
 namespace itk
 {
@@ -32,7 +32,7 @@ namespace itk
  * 
  * \ingroup   ImageFilters     
  */
-template <class TInputImage >
+template <class TInputImage, class TReferenceImage >
 class ITK_EXPORT ImageToAIMXMLFilter : public ProcessObject
 {
 public:
@@ -49,17 +49,40 @@ public:
   itkTypeMacro(ImageToAIMXMLFilter, ProcessObject);
 
   /** Some typedefs. */
-  typedef TInputImage                                 InputImageType;
-  typedef typename    InputImageType::ConstPointer    InputImagePointer;
- 
-
-  const char* GetOutput() const;
+  static const int                                             Dimension = 2;
+  typedef TInputImage                                          InputImageType;
+  typedef TReferenceImage                                      ReferenceImageType;
+  typedef typename InputImageType::PixelType                   PixelType;
+  typedef unsigned char                                        BinaryPixelType;
+  typedef itk::Image<PixelType, Dimension>                     SliceType;
+  typedef itk::Image<BinaryPixelType, Dimension>               ThresholdedSliceType;
+  typedef typename InputImageType::ConstPointer                InputImagePointer;
+  typedef typename ReferenceImageType::ConstPointer            ReferenceImagePointer;
+  typedef std::vector<std::string>                             UIDContainerType;
+  typedef itk::ExtractImageFilter<InputImageType, SliceType>   ExtractFilterType;
+  typedef itk::BinaryThresholdImageFilter<SliceType, ThresholdedSliceType>
+                                                               ThresholdFilterType;
 
   /** Set the input in the form of an itk::Image */
   void SetInput( const InputImageType * );
+  
+  /** Set the reference image for coordinate transformation */
+  void SetReference( const ReferenceImageType * );
 
   /** This filters the image into the AIM XML format */
   void Update();
+
+  itkSetStringMacro(CurrentUID);
+  itkSetStringMacro(PatientName);
+  itkSetStringMacro(PatientId);
+  itkSetStringMacro(PatientSex);
+  itkSetStringMacro(StudyInstanceUID);
+  itkSetStringMacro(SeriesInstanceUID);
+
+  itkGetStringMacro(Output);
+
+  void SetSOPClassUIDs( const UIDContainerType& uids );
+  void SetSOPInstanceUIDs( const UIDContainerType& uids );
   
 protected:
   ImageToAIMXMLFilter(); 
@@ -69,8 +92,17 @@ private:
   ImageToAIMXMLFilter(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-  const char*       m_XMLBuffer;
-  InputImagePointer m_InputImage;
+  InputImagePointer     m_InputImage;
+  ReferenceImagePointer m_ReferenceImage;
+  std::string           m_Output;
+  std::string           m_CurrentUID;
+  std::string           m_PatientName;
+  std::string           m_PatientId;
+  std::string           m_PatientSex;
+  std::string           m_StudyInstanceUID;
+  std::string           m_SeriesInstanceUID;
+  UIDContainerType      m_SOPClassUIDs;
+  UIDContainerType      m_SOPInstanceUIDs;
 
 };
 
