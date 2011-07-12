@@ -39,7 +39,6 @@ LesionSegmentationCommandLineProgressReporter::~LesionSegmentationCommandLinePro
 void LesionSegmentationCommandLineProgressReporter
 ::Execute( Object *caller, const EventObject &event)
 {
-  const Object *c = caller;
   this->ExecuteInternal( caller, event );
 }
 
@@ -74,7 +73,9 @@ void LesionSegmentationCommandLineProgressReporter
         }
       if (report)
         {
-        printf("%s - Progress %d\%",this->ProgressString.c_str(),this->ProgressValue);
+        printf("%s - Progress %d%%",
+               this->ProgressString.c_str(),
+               this->ProgressValue);
         printf("\r");
         fflush(stdout);
         }
