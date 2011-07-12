@@ -51,8 +51,10 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(ImageToAIMXMLFilter, ProcessObject);
 
-  /** Some typedefs. */
+  /** Constants */
   static const int                                             Dimension = 2;
+
+  /** Some typedefs. */
   typedef TInputImage                                          InputImageType;
   typedef TReferenceImage                                      ReferenceImageType;
   typedef typename InputImageType::PixelType                   PixelType;
@@ -86,6 +88,8 @@ public:
   itkSetStringMacro(StudyInstanceUID);
   itkSetStringMacro(SeriesInstanceUID);
 
+  itkSetMacro(ContourThreshold, PixelType);
+
   itkGetStringMacro(Output);
 
   void SetSOPClassUIDs( const UIDContainerType& uids );
@@ -102,12 +106,25 @@ protected:
                            ContourPointVectorType& vect,
                            ReferenceIndexValueType& index ) const;
 
+  /// Helper function for iterating through the level-set segmentation passed
+  /// to the filter and populating the multi-map of contour vectors
+  void PopulateContourContainer();
+
+  /// Helper function for generating the xml from the populated contour
+  /// container and string metadata passed to the filter
+  void GenerateXMLFromContours();
+
+  /// Generate the current system time in the format required by AIM:
+  /// YYYY-MM-DDTHH:MM:SS (the T is literal)
+  std::string GetCurrentTimeInAIMFormat() const;
+
 private:
   ImageToAIMXMLFilter(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
   InputImagePointer     m_InputImage;
   ReferenceImagePointer m_ReferenceImage;
+  PixelType             m_ContourThreshold;
   std::string           m_Output;
   std::string           m_CurrentUID;
   std::string           m_PatientName;
