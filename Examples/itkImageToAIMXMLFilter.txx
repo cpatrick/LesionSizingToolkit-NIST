@@ -153,7 +153,6 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
        sliceNum < inputSize[2]; 
        ++sliceNum )
     {
-    std::cout << "Iteration: " << sliceNum << std::endl;
     typename InputImageType::RegionType desiredRegion;
     typename InputImageType::IndexType desiredIndex = inputIndex;
     typename ContourFilterType::Pointer contourer = ContourFilterType::New();
@@ -175,7 +174,6 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
          contourNum < contourer->GetNumberOfOutputs();
          ++contourNum )
       {
-      std::cout << "Contour: " << contourNum << std::endl;
       typename ContourFilterType::VertexListConstPointer verts;
       verts = contourer->GetOutput(contourNum)->GetVertexList();
       ContourPointVectorType contourVector;
@@ -194,6 +192,8 @@ void
 ImageToAIMXMLFilter<TInputImage,TReferenceImage>
 ::GenerateXMLFromContours()
 {
+
+  // Constants that seem to be inherent to the format, yet non-variable
   const char* XmlVersion = "1.0";
   const char* Encoding = "UTF-8";
   const char* XMLNS =
@@ -436,13 +436,12 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
 
     }
   
-
+  // Dump the resultant xml to a buffer and into m_Output
   xmlDocDumpFormatMemory(doc, &xmlBuffer, &xmlBufferSize, 1);
-  printf("%s", (char*) xmlBuffer);
-
   char* docBuffer = (char*) xmlBuffer;
   m_Output = std::string( docBuffer );
 
+  // Free libxml2 memory
   xmlFree(xmlBuffer);
   xmlFreeDoc(doc);
 }

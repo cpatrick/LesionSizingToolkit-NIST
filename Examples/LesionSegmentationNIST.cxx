@@ -160,7 +160,6 @@ ImageAndMetaDataContainer* GetImageAndMetaData( std::string dir, bool ignoreDire
       seriesItr++;
       }
 
-
     std::string seriesIdentifier;
     seriesIdentifier = seriesUID.begin()->c_str();
 
@@ -172,13 +171,6 @@ ImageAndMetaDataContainer* GetImageAndMetaData( std::string dir, bool ignoreDire
     FileNamesContainer fileNames;
 
     fileNames = nameGenerator->GetFileNames( seriesIdentifier );
-
-    FileNamesContainer::const_iterator  fitr;
-    for( fitr = fileNames.begin(); fitr != fileNames.end(); ++fitr )
-      {
-      std::cout << *fitr << std::endl;
-      }
-
     reader->SetFileNames( fileNames );
 
     try
