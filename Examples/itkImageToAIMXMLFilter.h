@@ -39,22 +39,22 @@ template <class TInputImage, class TReferenceImage >
 class ITK_EXPORT ImageToAIMXMLFilter : public ProcessObject
 {
 public:
-  /** Standard class typedefs. */
+  /// Standard class typedefs.
   typedef ImageToAIMXMLFilter       Self;
   typedef ProcessObject             Superclass;
   typedef SmartPointer<Self>        Pointer;
   typedef SmartPointer<const Self>  ConstPointer;
 
-  /** Method for creation through the object factory. */
+  /// Method for creation through the object factory.
   itkNewMacro(Self);
   
-  /** Run-time type information (and related methods). */
+  /// Run-time type information (and related methods).
   itkTypeMacro(ImageToAIMXMLFilter, ProcessObject);
 
-  /** Constants */
+  /// Constants
   static const int                                             Dimension = 2;
 
-  /** Some typedefs. */
+  /// Typedefs
   typedef TInputImage                                          InputImageType;
   typedef TReferenceImage                                      ReferenceImageType;
   typedef typename InputImageType::PixelType                   PixelType;
@@ -72,15 +72,16 @@ public:
   typedef std::multimap<ReferenceIndexValueType,ContourPointVectorType>
                                                                ContourContainerType;
 
-  /** Set the input in the form of an itk::Image */
+  /// Set the input in the form of an image (segmentation)
   void SetInput( const InputImageType * );
   
-  /** Set the reference image for coordinate transformation */
+  /// Set the reference image for coordinate transformation
   void SetReference( const ReferenceImageType * );
 
-  /** This filters the image into the AIM XML format */
+  /// Filters the image into the AIM XML format
   void Update();
 
+  /// Setup strings about the reference image from its DICOM headers
   itkSetStringMacro(CurrentUID);
   itkSetStringMacro(PatientName);
   itkSetStringMacro(PatientId);
@@ -88,11 +89,18 @@ public:
   itkSetStringMacro(StudyInstanceUID);
   itkSetStringMacro(SeriesInstanceUID);
 
+  /// Set the threshold at which to generate the contours on the input
+  /// image
   itkSetMacro(ContourThreshold, PixelType);
 
   itkGetStringMacro(Output);
 
+  /// Set the SOP Class UIDs that correspond to each slice of the reference
+  /// image respectively
   void SetSOPClassUIDs( const UIDContainerType& uids );
+
+  /// Set the SOP Instance UIDs that correspond to each slice of the reference
+  /// image respectively
   void SetSOPInstanceUIDs( const UIDContainerType& uids );
   
 protected:
