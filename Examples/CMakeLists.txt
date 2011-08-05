@@ -27,7 +27,16 @@ IF (LSTK_USE_VTK)
   ADD_EXECUTABLE( LesionSegmentationNIST
    LesionSegmentationNIST.cxx
    itkLesionSegmentationCommandLineProgressReporter.cxx )
+
   TARGET_LINK_LIBRARIES( LesionSegmentationNIST 
     ${ITK_VTK_LSTK_LIBRARIES} 
     ${LIBXML2_LIBRARIES} )
+
+  ADD_EXECUTABLE( LesionSegmentationQIBench
+   LesionSegmentationQIBench.cxx
+   itkLesionSegmentationCommandLineProgressReporter.cxx )
+  TARGET_LINK_LIBRARIES( LesionSegmentationQIBench 
+   ${ITK_VTK_LSTK_LIBRARIES}
+   ${LIBXML2_LIBRARIES} )
+
 ENDIF (LSTK_USE_VTK)
