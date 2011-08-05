@@ -11,7 +11,7 @@ IF (LSTK_USE_VTK)
    ${ITK-LesionSizingToolkit_LIBRARIES}
    vtkRendering vtkIO vtkWidgets vtkHybrid )
 
-  find_package( boost REQUIRED )
+  find_package( Boost REQUIRED )
   INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
  ADD_EXECUTABLE( LesionSegmentation
