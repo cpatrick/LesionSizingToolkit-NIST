@@ -256,6 +256,9 @@ ImageToAIMXMLFilter<TInputImage,TReferenceImage>
               BAD_CAST "aimVersion",
               BAD_CAST AimVersion );
   xmlNewProp( rootNode, 
+              BAD_CAST "id",
+              BAD_CAST DefaultNumber );
+  xmlNewProp( rootNode, 
               BAD_CAST "xsi:schemaLocation",
               BAD_CAST XSISchemaLocation );
   xmlDocSetRootElement(doc, rootNode);
