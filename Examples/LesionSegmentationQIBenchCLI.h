@@ -40,6 +40,10 @@ public:
       MetaCommand::LIST);
     this->AddArgument("MaximumRadius", false, "Maximum radius of the lesion in mm. This can be used as alternate way of specifying the bounds. You specify a seed and a value of say 20mm, if you know the lesion is smaller than 20mm..", MetaCommand::FLOAT, "30");
     this->AddArgument("UsePhysicalSpace", false, "Use physical coordinates for seed points and ROI inputs.", MetaCommand::BOOL, "1");
+    this->AddArgument("OffsetFromOrigin", false, "Manually offset the seed "
+                      "points and bounding boxes by the origin. This only "
+                      "takes effect if the user sets UsePhysicalSpace to "
+                      "True.", MetaCommand::BOOL, "0");
     
     
     if(!this->Parse(argc, argv))

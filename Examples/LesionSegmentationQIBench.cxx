@@ -459,6 +459,11 @@ int main( int argc, char * argv[] )
       {
       p1[i] = roi[2*i];
       p2[i] = roi[2*i+1];
+      if( args.GetValueAsBool("OffsetFromOrigin") )
+        {
+        p1[i] += origin[i];
+        p2[i] += origin[i];
+        }
       }
     image->TransformPhysicalPointToIndex(p1, pi1);
     image->TransformPhysicalPointToIndex(p2, pi2);
@@ -541,7 +546,28 @@ int main( int argc, char * argv[] )
 
   if( args.GetValueAsBool("UsePhysicalSpace") )
     {
-    seg->SetSeeds(args.GetSeeds());
+    if( args.GetValueAsBool("OffsetFromOrigin") )
+      {
+      PointListType seeds = args.GetSeeds();
+      PointListType::iterator itr;
+      for(itr = seeds.begin(); itr != seeds.end(); ++itr)
+        {
+        PointType point = itr->GetPosition();
+        PointType newPoint;
+        for(unsigned int i = 0; i < 3; ++i)
+          {
+          newPoint[i] = point[i] + origin[i];
+          }
+        itr->Print(std::cout);
+        itr->SetPosition(newPoint[0],newPoint[1],newPoint[2]);
+        itr->Print(std::cout);
+        }
+      seg->SetSeeds(seeds);
+      }
+    else
+      {
+      seg->SetSeeds(args.GetSeeds());
+      }
     }
   else
     {
