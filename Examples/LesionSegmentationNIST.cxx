@@ -8,6 +8,12 @@
 #include "itkLesionSegmentationCommandLineProgressReporter.h"
 #include "itkEventObject.h"
 #include "itkImageToVTKImageFilter.h"
+
+#include "itkImageToAIMXMLFilter.h"
+#include "itkMetaImageIOFactory.h"
+
+#include "gdcmUIDGenerator.h"
+
 #include "vtkMassProperties.h"
 #include "vtkImageData.h"
 #include "vtkMarchingCubes.h"
@@ -31,11 +37,31 @@
 #define VTK_CREATE(type, name) \
   vtkSmartPointer<type> name = vtkSmartPointer<type>::New()
 
-typedef short PixelType;
-const unsigned int ImageDimension = 3;
-typedef itk::Image< PixelType, ImageDimension > InputImageType;
-typedef itk::Image< float, ImageDimension > RealImageType;
+// Typedefs and contants
+const std::string                               PatientNameTag = "0010|0010";
+const std::string                               PatientIdTag = "0010|0020";
+const std::string                               PatientSexTag = "0010|0040";
+const std::string                               StudyInstanceUIDTag = "0020|000d";
+const std::string                               SeriesInstanceUIDTag = "0020|000e";
+const std::string                               SOPClassUIDTag = "0008|0016";
+const std::string                               SOPInstanceUIDTag = "0008|0018";
+const std::string                               SeriesRestriction = "0008|0021";
+const unsigned int                              ImageDimension = 3;
+const float                                     ContourValue = -0.5;
 
+typedef short                                   PixelType;
+typedef itk::Image< PixelType, ImageDimension > InputImageType;
+typedef InputImageType                          ImageType;
+typedef itk::ImageSeriesReader< ImageType >     ReaderType;
+typedef itk::Image< float, ImageDimension >     RealImageType;
+typedef itk::GDCMImageIO                        ImageIOType;
+typedef itk::GDCMSeriesFileNames                NamesGeneratorType;
+typedef std::vector< std::string >              SeriesIdContainer;
+typedef std::vector< std::string >              FileNamesContainer;
+typedef std::vector< std::string >              UIDStorageVector;
+typedef itk::MetaDataObject< std::string >      MetaDataStringType;
+typedef const MetaDataStringType*               MetaDataStringConstPointer;
+typedef const itk::MetaDataObjectBase*          MetaDataUncastedPointer;
 
 // --------------------------------------------------------------------------
 class SwitchVisibilityCallback : public vtkCommand
@@ -64,26 +90,57 @@ protected:
   vtkRenderWindow *RenWin;
 };
 
+// --------------------------------------------------------------------------
+class ImageAndMetaDataContainer
+{
+public:
+  ImageAndMetaDataContainer(std::string pName,
+                            std::string pId,
+                            std::string pSex,
+                            std::string stUID,
+                            std::string seUID,
+                            UIDStorageVector sopClassVect,
+                            UIDStorageVector sopInstanceVect,
+                            InputImageType::Pointer img) :
+    patientName(pName),
+    patientId(pId),
+    patientSex(pSex),
+    studyInstanceUID(stUID),
+    seriesInstanceUID(seUID),
+    sopClassUIDVector(sopClassVect),
+    sopInstanceUIDVector(sopInstanceVect)
+  {
+    image = img;
+    gdcm::UIDGenerator gen;
+    currentUID = std::string(gen.Generate());
+    std::cout << "Creating with UID: " << currentUID << std::endl;
+  }
+  
+  std::string patientName;
+  std::string patientId;
+  std::string patientSex;
+  std::string studyInstanceUID;
+  std::string seriesInstanceUID;
+  std::string currentUID;
+
+  UIDStorageVector sopClassUIDVector;
+  UIDStorageVector sopInstanceUIDVector;
+
+  InputImageType::Pointer image;
+};
 
 // --------------------------------------------------------------------------
-InputImageType::Pointer GetImage( std::string dir, bool ignoreDirection )
+ImageAndMetaDataContainer* GetImageAndMetaData( std::string dir, bool ignoreDirection )
 {
-  const unsigned int Dimension = ImageDimension;
-  typedef itk::Image< PixelType, Dimension >         ImageType;
 
-  typedef itk::ImageSeriesReader< ImageType >        ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
-
-  typedef itk::GDCMImageIO       ImageIOType;
   ImageIOType::Pointer dicomIO = ImageIOType::New();
-
   reader->SetImageIO( dicomIO );
 
-  typedef itk::GDCMSeriesFileNames NamesGeneratorType;
   NamesGeneratorType::Pointer nameGenerator = NamesGeneratorType::New();
 
   nameGenerator->SetUseSeriesDetails( true );
-  nameGenerator->AddSeriesRestriction("0008|0021" );
+  nameGenerator->AddSeriesRestriction( SeriesRestriction );
   nameGenerator->SetDirectory( dir );
 
   try
@@ -92,8 +149,6 @@ InputImageType::Pointer GetImage( std::string dir, bool ignoreDirection )
     std::cout << std::endl << dir << std::endl << std::endl;
     std::cout << "Contains the following DICOM Series: ";
     std::cout << std::endl << std::endl;
-
-    typedef std::vector< std::string >    SeriesIdContainer;
 
     const SeriesIdContainer & seriesUID = nameGenerator->GetSeriesUIDs();
 
@@ -105,32 +160,16 @@ InputImageType::Pointer GetImage( std::string dir, bool ignoreDirection )
       seriesItr++;
       }
 
-
     std::string seriesIdentifier;
     seriesIdentifier = seriesUID.begin()->c_str();
-
 
     std::cout << std::endl << std::endl;
     std::cout << "Now reading series: " << std::endl << std::endl;
     std::cout << seriesIdentifier << std::endl;
     std::cout << std::endl << std::endl;
 
-
-    typedef std::vector< std::string >   FileNamesContainer;
     FileNamesContainer fileNames;
-
     fileNames = nameGenerator->GetFileNames( seriesIdentifier );
-
-    FileNamesContainer::const_iterator  fitr = fileNames.begin();
-    FileNamesContainer::const_iterator  fend = fileNames.end();
-
-    while( fitr != fend )
-      {
-      std::cout << *fitr << std::endl;
-      ++fitr;
-      }
-
-
     reader->SetFileNames( fileNames );
 
     try
@@ -143,20 +182,76 @@ InputImageType::Pointer GetImage( std::string dir, bool ignoreDirection )
       return NULL;
       }
 
+    ReaderType::DictionaryArrayRawPointer dictOfDicts =
+      reader->GetMetaDataDictionaryArray();
+    UIDStorageVector sopClassUIDVector;
+    sopClassUIDVector.reserve(dictOfDicts->size());
+    UIDStorageVector sopInstanceUIDVector;
+    sopInstanceUIDVector.reserve(dictOfDicts->size());
+    ReaderType::DictionaryArrayType::const_iterator itr;
+    for( itr = dictOfDicts->begin(); itr != dictOfDicts->end(); ++itr )
+      {
+      ReaderType::DictionaryRawPointer dict = *itr;
+
+      MetaDataUncastedPointer sopClassUIDBase = dict->Get(SOPClassUIDTag);
+      MetaDataUncastedPointer sopInstanceUIDBase = dict->Get(SOPInstanceUIDTag);
+
+      MetaDataStringConstPointer elClassUID;
+      MetaDataStringConstPointer elInstanceUID;
+      elClassUID = dynamic_cast<MetaDataStringConstPointer>(sopClassUIDBase);
+      elInstanceUID = dynamic_cast<MetaDataStringConstPointer>(sopInstanceUIDBase);
+
+      if( elClassUID )
+        {
+        sopClassUIDVector.push_back(elClassUID->GetMetaDataObjectValue());
+        }
+      if( elInstanceUID )
+        {
+        sopInstanceUIDVector.push_back(elInstanceUID->GetMetaDataObjectValue());
+        }
+      }
+
+    std::string patientName;
+    std::string patientId;
+    std::string patientSex;
+    std::string studyInstanceUID;
+    std::string seriesInstanceUID;
+    
+    dicomIO->GetValueFromTag( PatientNameTag, patientName );
+    dicomIO->GetValueFromTag( PatientIdTag, patientName );
+    dicomIO->GetValueFromTag( PatientSexTag, patientSex );
+    dicomIO->GetValueFromTag( StudyInstanceUIDTag, studyInstanceUID );
+    dicomIO->GetValueFromTag( SeriesInstanceUIDTag, seriesInstanceUID );
+
+    std::cout << "Patient Name: " << patientName << std::endl
+              << "Patient ID: " << patientId << std::endl
+              << "Patient Sex: " << patientSex << std::endl
+              << "Study Instance UID: " << studyInstanceUID << std::endl
+              << "Series Instance UID: " << seriesInstanceUID << std::endl;
 
     ImageType::Pointer image = reader->GetOutput();
     ImageType::DirectionType direction;
     direction.SetIdentity();
     image->DisconnectPipeline();
-    std::cout << "Image Direction:" << image->GetDirection() << std::endl;
 
+    std::cout << "Image Direction:" << image->GetDirection() << std::endl;
 
     if (ignoreDirection)
       {
-      std::cout << "Ignoring the direction of the DICOM image and using identity." << std::endl;
+      std::cout << "Ignoring the direction of the DICOM image and using "
+                << "identity." << std::endl;
       image->SetDirection(direction);
       }
-    return image;
+    ImageAndMetaDataContainer* output;
+    output = new ImageAndMetaDataContainer( patientName,
+                                            patientId,
+                                            patientSex,
+                                            studyInstanceUID,
+                                            seriesInstanceUID,
+                                            sopClassUIDVector,
+                                            sopInstanceUIDVector,
+                                            image );
+    return output;
     }
   catch (itk::ExceptionObject &ex)
     {
@@ -305,27 +400,36 @@ int main( int argc, char * argv[] )
 {
   LesionSegmentationNISTCLI args( argc, argv );
 
-  typedef itk::ImageFileReader< InputImageType > InputReaderType;
-  typedef itk::ImageFileWriter< RealImageType > OutputWriterType;
+  typedef itk::ImageFileReader< InputImageType >    InputReaderType;
+  typedef itk::ImageFileWriter< RealImageType >     OutputWriterType;
+  typedef itk::ImageToAIMXMLFilter<
+          RealImageType, InputImageType >           AIMFilterType;
   typedef itk::LesionSegmentationImageFilter8<
-          InputImageType, RealImageType > SegmentationFilterType;
-
+          InputImageType, RealImageType >           SegmentationFilterType;
 
   // Read the volume
   InputReaderType::Pointer reader = InputReaderType::New();
   InputImageType::Pointer image;
 
+  ImageAndMetaDataContainer* data = NULL;
+
   std::cout << "Reading " << args.GetValueAsString("InputImage") << ".." << std::endl;
   if (!args.GetValueAsString("InputDICOMDir").empty())
     {
     std::cout << "Reading from DICOM dir " << args.GetValueAsString("InputDICOMDir") << ".." << std::endl;
-    image = GetImage(
+
+    data = GetImageAndMetaData(
       args.GetValueAsString("InputDICOMDir"),
       args.GetValueAsBool("IgnoreDirection"));
+    image = data->image;
 
     if (!image)
       {
       std::cerr << "Failed to read the input image" << std::endl;
+      if(data)
+        {
+        delete data;
+        }
       return EXIT_FAILURE;
       }
     }
@@ -347,6 +451,10 @@ int main( int argc, char * argv[] )
   catch( boost::bad_lexical_cast& e )
     {
     std::cerr << "Error in seed file." << std::endl;
+    if( data )
+      {
+      delete data;
+      }
     return EXIT_FAILURE;
     }
 
@@ -377,6 +485,10 @@ int main( int argc, char * argv[] )
     {
     std::cerr << "ROI region has no overlap with the image region"
               << std::endl;
+    if( data )
+      {
+      delete data;
+      }
     return EXIT_FAILURE;
     }
 
@@ -408,6 +520,10 @@ int main( int argc, char * argv[] )
     catch( itk::ExceptionObject & err )
       {
       std::cerr << "ExceptionObject caught !" << err << std::endl;
+      if( data )
+        {
+        delete data;
+        }
       return EXIT_FAILURE;
       }
     }
@@ -431,6 +547,10 @@ int main( int argc, char * argv[] )
   catch( boost::bad_lexical_cast& e )
     {
     std::cerr << "Error in seed file." << std::endl;
+    if( data )
+      {
+      delete data;
+      }
     return EXIT_FAILURE;
     }
 
@@ -446,33 +566,63 @@ int main( int argc, char * argv[] )
 
   if (!args.GetValueAsString("OutputImage").empty())
     {
-    std::cout << "Writing the output segmented level set."
-      << args.GetValueAsString("OutputImage") <<
-      ". The segmentation is an isosurface of this image at a value of -0.5"
-      << std::endl;
+    std::cout << "Writing the output segmented level set. "
+              << args.GetValueAsString("OutputImage") << ". "
+              << "The segmentation is an isosurface of this image at "
+              << "a value of " << ContourValue << "." << std::endl;
+    itk::ObjectFactoryBase::RegisterFactory( itk::MetaImageIOFactory::New() );
     OutputWriterType::Pointer writer = OutputWriterType::New();
     writer->SetFileName(args.GetValueAsString("OutputImage"));
     writer->SetInput(seg->GetOutput());
     writer->Update();
     }
 
-  // Compute volume
+  if (!args.GetValueAsString("OutputAIM").empty())
+    {
+    std::cout << "Writing the output segmented level set in AIM XML format. "
+              << args.GetValueAsString("OutputImage") << ". "
+              << "The segmentation is an isosurface of this image at "
+              << "a value of " << ContourValue << "." << std::endl;
+    AIMFilterType::Pointer aimFilter = AIMFilterType::New();
+    aimFilter->SetContourThreshold( ContourValue );
+    aimFilter->SetInput( seg->GetOutput() );
+    aimFilter->SetReference( data->image );
+    aimFilter->SetPatientName( data->patientName );
+    aimFilter->SetPatientId( data->patientId );
+    aimFilter->SetPatientSex( data->patientSex );
+    aimFilter->SetStudyInstanceUID( data->studyInstanceUID );
+    aimFilter->SetSeriesInstanceUID( data->seriesInstanceUID );
+    aimFilter->SetCurrentUID( data->currentUID );
+    aimFilter->SetSOPClassUIDs( data->sopClassUIDVector );
+    aimFilter->SetSOPInstanceUIDs( data->sopInstanceUIDVector );
+    aimFilter->Update();
+    std::ofstream aimFile;
+    aimFile.open( args.GetValueAsString("OutputAIM").c_str() );
+    aimFile << aimFilter->GetOutput();
+    aimFile.close();
+    }
 
+  // Compute volume
   typedef itk::ImageToVTKImageFilter< RealImageType > RealITKToVTKFilterType;
   RealITKToVTKFilterType::Pointer itk2vtko = RealITKToVTKFilterType::New();
   itk2vtko->SetInput( seg->GetOutput() );
   itk2vtko->Update();
 
-  std::cout << "Generating an isosurface of the zero-level set (iso-value of -0.5)" << std::endl;
+  std::cout << "Generating an isosurface of the zero-level set "
+            << "(iso-value of " << ContourValue << ")" << std::endl;
   vtkSmartPointer< vtkMarchingCubes > mc =
     vtkSmartPointer< vtkMarchingCubes >::New();
   mc->SetInput(itk2vtko->GetOutput());
-  mc->SetValue(0,-0.5);
+  mc->SetValue(0,ContourValue);
   mc->Update();
 
   if (mc->GetOutput()->GetNumberOfCells() == 0)
     {
     std::cerr << "Segmentation failed !" << std::endl;
+    if( data )
+      {
+      delete data;
+      }
     return EXIT_FAILURE;
     }
 
@@ -494,10 +644,17 @@ int main( int argc, char * argv[] )
 
   if (args.GetOptionWasSet("Visualize"))
     {
+    if( data )
+      {
+      delete data;
+      }
     return ViewImageAndSegmentationSurface(
              image, mc->GetOutput(), args);
     }
 
-
+  if( data )
+    {
+    delete data;
+    }
   return EXIT_SUCCESS;
 }

@@ -31,6 +31,8 @@ namespace itk
  * This class resamples an image using BSplineInterpolator and produces
  * an isotropic image.
  *
+ *\ingroup ITKLesionSizingToolkit
+ * \ingroup ITKLesionSizingToolkit
  */
 template<class TInputImage, class TOutputImage>
 class IsotropicResamplerImageFilter
@@ -44,6 +46,7 @@ public:
   /** Image typedef support   */
   typedef TInputImage  InputImageType;
   typedef TOutputImage OutputImageType;
+  typedef typename OutputImageType::Pointer   OutputImagePointer;
       
   /** SmartPointer typedef support  */
   typedef SmartPointer<Self>        Pointer;
@@ -89,7 +92,7 @@ public:
    * execution model.  The original documentation of this method is
    * below. \sa ProcessObject::GenerateOutputInformaton() */
   virtual void GenerateOutputInformation( void );
-  
+
 protected:
   IsotropicResamplerImageFilter();
   void PrintSelf(std::ostream& os, Indent indent) const;
@@ -112,7 +115,7 @@ private:
 } //end of namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkIsotropicResamplerImageFilter.txx"
+#include "itkIsotropicResamplerImageFilter.hxx"
 #endif
-  
+
 #endif

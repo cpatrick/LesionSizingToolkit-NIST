@@ -37,6 +37,7 @@ namespace itk
  * The pixels size is, of course, taken into account.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT GrayscaleImageSegmentationVolumeEstimator :
@@ -48,6 +49,7 @@ public:
   typedef SegmentationVolumeEstimator<NDimension>     Superclass;
   typedef SmartPointer<Self>                          Pointer;
   typedef SmartPointer<const Self>                    ConstPointer;
+  typedef typename Superclass::RealObjectType         RealObjectType;
 
   /** Method for constructing new instances of this class. */
   itkNewMacro( Self );
@@ -88,7 +90,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkGrayscaleImageSegmentationVolumeEstimator.txx"
+# include "itkGrayscaleImageSegmentationVolumeEstimator.hxx"
 #endif
 
 #endif

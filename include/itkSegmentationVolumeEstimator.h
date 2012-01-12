@@ -32,6 +32,7 @@ namespace itk
  * SpatialObjects are used as input of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT SegmentationVolumeEstimator : public ProcessObject
@@ -59,6 +60,7 @@ public:
 
   /** Set the input SpatialObject representing the segmentation whose volume
    * will be estimated */
+  using ProcessObject::SetInput;
   void SetInput( const SpatialObjectType * inputSpatialObject );
 
   /** Type of DataObjects used for scalar outputs */
@@ -91,7 +93,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkSegmentationVolumeEstimator.txx"
+# include "itkSegmentationVolumeEstimator.hxx"
 #endif
 
 #endif

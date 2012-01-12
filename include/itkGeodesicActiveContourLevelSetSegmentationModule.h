@@ -30,6 +30,7 @@ namespace itk
  * SpatialObjects are used as inputs and outputs of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT GeodesicActiveContourLevelSetSegmentationModule : 
@@ -84,7 +85,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkGeodesicActiveContourLevelSetSegmentationModule.txx"
+# include "itkGeodesicActiveContourLevelSetSegmentationModule.hxx"
 #endif
 
 #endif

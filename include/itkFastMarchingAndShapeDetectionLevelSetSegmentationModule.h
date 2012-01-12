@@ -32,6 +32,7 @@ namespace itk
  * SpatialObjects are used as inputs and outputs of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT FastMarchingAndShapeDetectionLevelSetSegmentationModule : 
@@ -105,7 +106,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkFastMarchingAndShapeDetectionLevelSetSegmentationModule.txx"
+# include "itkFastMarchingAndShapeDetectionLevelSetSegmentationModule.hxx"
 #endif
 
 #endif

@@ -37,6 +37,7 @@ namespace itk
  * SpatialObjects are used as inputs and outputs of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT LesionSegmentationMethod : public ProcessObject
@@ -142,7 +143,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkLesionSegmentationMethod.txx"
+# include "itkLesionSegmentationMethod.hxx"
 #endif
 
 #endif

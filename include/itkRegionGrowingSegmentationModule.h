@@ -30,6 +30,7 @@ namespace itk
  * SpatialObjects are used as inputs and outputs of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT RegionGrowingSegmentationModule : public SegmentationModule<NDimension>
@@ -96,7 +97,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkRegionGrowingSegmentationModule.txx"
+# include "itkRegionGrowingSegmentationModule.hxx"
 #endif
 
 #endif

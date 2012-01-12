@@ -37,6 +37,7 @@ namespace itk
  * SpatialObjects are used as inputs and outputs of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT SigmoidFeatureGenerator : public FeatureGenerator<NDimension>
@@ -66,6 +67,7 @@ public:
   typedef typename Superclass::SpatialObjectType            SpatialObjectType;
 
   /** Input data that will be used for generating the feature. */
+  using ProcessObject::SetInput;
   void SetInput( const SpatialObjectType * input );
   const SpatialObjectType * GetInput() const;
 
@@ -112,7 +114,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkSigmoidFeatureGenerator.txx"
+# include "itkSigmoidFeatureGenerator.hxx"
 #endif
 
 #endif

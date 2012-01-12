@@ -35,6 +35,7 @@ namespace itk
  * will compete for pixels against other labels.
  *
  * \ingroup RegionGrowingSegmentation 
+ * \ingroup ITKLesionSizingToolkit
  */
 template <class TInputImage, class TOutputImage>
 class ITK_EXPORT RegionCompetitionImageFilter:
@@ -53,7 +54,7 @@ public:
   /** Run-time type information (and related methods).  */
   itkTypeMacro(RegionCompetitionImageFilter, ImageToImageFilter);
 
-  typedef typename Superclass::InputImageType             InputImageType;
+  typedef TInputImage             InputImageType;
   typedef typename InputImageType::Pointer                InputImagePointer;
   typedef typename InputImageType::ConstPointer           InputImageConstPointer;
   typedef typename InputImageType::RegionType             InputImageRegionType; 
@@ -62,7 +63,7 @@ public:
   typedef typename InputImageType::IndexType              IndexType;
   typedef typename InputImageType::OffsetValueType        OffsetValueType;
   
-  typedef typename Superclass::OutputImageType            OutputImageType;
+  typedef TOutputImage            OutputImageType;
   typedef typename OutputImageType::Pointer               OutputImagePointer;
   typedef typename OutputImageType::RegionType            OutputImageRegionType; 
   typedef typename OutputImageType::PixelType             OutputImagePixelType; 
@@ -174,6 +175,7 @@ private:
   // Helper cache variables 
   //
   const InputImageType *            m_InputImage;
+  const OutputImageType*       m_inputLabelsImage; 
   OutputImageType *                 m_OutputImage;
 
   typedef itk::Image< unsigned char, InputImageDimension >  SeedMaskImageType;
@@ -191,7 +193,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkRegionCompetitionImageFilter.txx"
+#include "itkRegionCompetitionImageFilter.hxx"
 #endif
 
 #endif

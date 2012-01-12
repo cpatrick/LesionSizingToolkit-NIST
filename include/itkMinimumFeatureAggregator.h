@@ -36,6 +36,7 @@ namespace itk
  * SpatialObjects are used as inputs and outputs of this class.
  *
  * \ingroup SpatialObjectFilters
+ * \ingroup ITKLesionSizingToolkit
  */
 template <unsigned int NDimension>
 class ITK_EXPORT MinimumFeatureAggregator : public FeatureAggregator<NDimension>
@@ -79,7 +80,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkMinimumFeatureAggregator.txx"
+# include "itkMinimumFeatureAggregator.hxx"
 #endif
 
 #endif

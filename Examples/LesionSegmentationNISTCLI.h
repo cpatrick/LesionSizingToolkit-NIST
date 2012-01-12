@@ -24,6 +24,9 @@ public:
     this->AddArgument("InputImage",false,"Input image to be segmented.");
     this->AddArgument("InputDICOMDir",false,"DICOM directory containing series of the Input image to be segmented.");
     this->AddArgument("OutputImage", false, "Output segmented image");
+
+    this->AddArgument("OutputAIM", false, 
+                      "Output segmented image in AIM format");
     this->AddArgument("OutputMesh", true, "Output segmented surface (STL filename expected)");
     this->AddArgument("OutputROI", false, "Write the ROI within which the segmentation will be confined to (for debugging purposes)");
     this->AddArgument("Visualize", false, "Visualize the input image and the segmented surface.", MetaCommand::BOOL, "0");
